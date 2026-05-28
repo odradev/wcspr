@@ -3,3 +3,4 @@
 extern crate alloc;
 
 pub mod wcspr_v1;
+pub mod wcspr_v2;

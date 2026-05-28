@@ -1,6 +1,11 @@
-last_updated = "2026-05-28T08:20:32Z"
+last_updated = "2026-05-28T08:59:47Z"
 
 [[contracts]]
 name = "WCSPRV1"
 package_name = "WCSPRV1"
+package_hash = "hash-5592a286632fa7e152d56363b27faaf0442fdbd387a696bde84c9434289ac8b0"
+
+[[contracts]]
+name = "WCSPRV2"
+package_name = "WCSPRV2"
 package_hash = "hash-5592a286632fa7e152d56363b27faaf0442fdbd387a696bde84c9434289ac8b0"

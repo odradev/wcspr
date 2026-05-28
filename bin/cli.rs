@@ -1,12 +1,14 @@
-use odra::host::{HostEnv, InstallConfig, NoArgs};
+use odra::host::{Deployer, HostEnv, InstallConfig, NoArgs, UpgradeConfig};
+use odra::prelude::Addressable;
 use odra::schema::casper_contract_schema::NamedCLType;
-use odra_cli::{DeployerExt, cspr};
+use odra_cli::{ContractProvider, DeployerExt, cspr};
 use odra_cli::{
     deploy::DeployScript,
     scenario::{Args, Error, Scenario, ScenarioMetadata},
     CommandArg, DeployedContractsContainer, OdraCli, 
 };
 use wcspr::wcspr_v1::WCSPRV1;
+use wcspr::wcspr_v2::{WCSPRV2, WCSPRV2HostRef, WCSPRV2UpgradeArgs};
 
 // The named key under which the contract will be stored
 // under the account's named keys. It was deployed with this named key
@@ -35,37 +37,53 @@ impl DeployScript for WCSPRV1DeployScript {
 }
 
 /// A custom scenario that demonstrates how to use the CLI tool with a custom argument.
-pub struct MyScenario;
+pub struct UpgradeV1ToV2Scenario;
 
-impl Scenario for MyScenario {
+impl Scenario for UpgradeV1ToV2Scenario {
     fn args(&self) -> Vec<CommandArg> {
         vec![CommandArg::new(
-            "my_arg",
-            "A custom argument for the scenario",
+            "chain_name",
+            "The name of the blockchain network",
             NamedCLType::String,
         )]
     }
 
     fn run(
         &self,
-        _env: &HostEnv,
-        _container: &DeployedContractsContainer,
+        env: &HostEnv,
+        container: &DeployedContractsContainer,
         args: Args
     ) -> Result<(), Error> {
+        odra_cli::log("Upgrading WCSPRV1 to WCSPRV2...");
+        
         // Read a contract reference from the container
-        // let mut contract = container.contract_ref::<MyContract>(env)?;
+        let contract = container.contract_ref::<WCSPRV1>(env)?;
+        odra_cli::log(&format!("Current contract: {:?}", contract.address()));
 
         // Read the argument value
-        let _my_arg = args.get_single::<String>("my_arg")?;
+        let chain_name = args.get_single::<String>("chain_name")?;
+        odra_cli::log(&format!("Chain name: {}", chain_name));
+
+        // Upgrade.
+        env.set_gas(cspr!(500));
+        let contract = WCSPRV2::try_upgrade_with_cfg(env, contract.address(), WCSPRV2UpgradeArgs{
+            chain_name,
+        }, UpgradeConfig {
+            package_named_key: String::from(NAMED_KEY),
+            allow_key_override: true,
+            force_create_upgrade_group: false,
+        })?;
+        odra_cli::log("Upgrade successful!");
+
+        container.add_contract::<WCSPRV2HostRef>(&contract)?;
 
         Ok(())
     }
 }
 
-impl ScenarioMetadata for MyScenario {
-    const NAME: &'static str = "my_scenario";
-    const DESCRIPTION: &'static str = 
-        "A custom scenario that demonstrates how to use the CLI tool with a custom argument.";
+impl ScenarioMetadata for UpgradeV1ToV2Scenario {
+    const NAME: &'static str = "upgrade_v1_to_v2";
+    const DESCRIPTION: &'static str = "Upgrade WCSPRV1 to WCSPRV2.";
 }
 
 /// Main function to run the CLI tool.
@@ -74,7 +92,8 @@ pub fn main() {
         .about("CLI tool for abc smart contract")
         .deploy(WCSPRV1DeployScript)
         .contract::<WCSPRV1>()
-        .scenario(MyScenario)
+        .contract::<WCSPRV2>()
+        .scenario(UpgradeV1ToV2Scenario)
         .build()
         .run();
 }

@@ -23,13 +23,13 @@ pub struct Withdrawal {
     pub value: U256
 }
 
-/// The WrappedNativeToken module.
+/// The WCSPR module.
 #[odra::module(events = [Deposit, Withdrawal])]
 pub struct WCSPRV1 {
     token: SubModule<Cep18>
 }
 
-/// The WrappedNativeToken module implementation.
+/// The WCSPR module implementation.
 #[odra::module]
 impl WCSPRV1 {
     /// Initializes the contract with the metadata.
@@ -98,49 +98,20 @@ impl WCSPRV1 {
         });
     }
 
-    /// Sets the allowance for `spender` to spend `amount` of the caller's tokens.
-    pub fn allowance(&self, owner: &Address, spender: &Address) -> U256 {
-        self.token.allowance(owner, spender)
-    }
-
-    /// Returns the balance of `address`.
-    pub fn balance_of(&self, address: &Address) -> U256 {
-        self.token.balance_of(address)
-    }
-
-    /// Returns the total supply of the token.
-    pub fn total_supply(&self) -> U256 {
-        self.token.total_supply()
-    }
-
-    /// Returns the number of decimals used by the token.
-    pub fn decimals(&self) -> u8 {
-        self.token.decimals()
-    }
-
-    /// Returns the symbol of the token.
-    pub fn symbol(&self) -> String {
-        self.token.symbol()
-    }
-
-    /// Returns the name of the token.
-    pub fn name(&self) -> String {
-        self.token.name()
-    }
-
-    /// Approves `spender` to spend `amount` of the caller's tokens.
-    pub fn approve(&mut self, spender: &Address, amount: &U256) {
-        self.token.approve(spender, amount)
-    }
-
-    /// Transfers `amount` of the owners tokens to `recipient` using allowance.
-    pub fn transfer_from(&mut self, owner: &Address, recipient: &Address, amount: &U256) {
-        self.token.transfer_from(owner, recipient, amount)
-    }
-
-    /// Transfers `amount` of the caller's tokens to `recipient`.
-    pub fn transfer(&mut self, recipient: &Address, amount: &U256) {
-        self.token.transfer(recipient, amount)
+    delegate! {
+        to self.token {
+            fn name(&self) -> String;
+            fn symbol(&self) -> String;
+            fn decimals(&self) -> u8;
+            fn total_supply(&self) -> U256;
+            fn balance_of(&self, address: &Address) -> U256;
+            fn allowance(&self, owner: &Address, spender: &Address) -> U256;
+            fn approve(&mut self, spender: &Address, amount: &U256);
+            fn decrease_allowance(&mut self, spender: &Address, decr_by: &U256);
+            fn increase_allowance(&mut self, spender: &Address, inc_by: &U256);
+            fn transfer(&mut self, recipient: &Address, amount: &U256);
+            fn transfer_from(&mut self, owner: &Address, recipient: &Address, amount: &U256);
+        }
     }
 }
 
